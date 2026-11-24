@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "har2recipe"
+version = "0.1.0"
+description = "Turn a browser HAR into a Python client and a recipe that replays with no model."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.9"
+dependencies = []
+keywords = ["har", "reverse-engineering", "api", "scraping", "claude", "agents"]
+
+[project.scripts]
+har2recipe = "har2recipe:main"
+
+[tool.setuptools]
+py-modules = ["har2recipe"]
