@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>har2recipe: browse a site once, get its hidden API as a Python client</title>
+<meta name='description' content='har2recipe turns a browser HAR into a Python API client and a recipe that replays in about a second with no browser and no model. Free and MIT.'>
+<link rel='canonical' href='https://trungtin.github.io/har2recipe/'>
+<!-- SEARCH-CONSOLE-TAG: the chief replaces this comment with the google-site-verification meta tag Tin pastes on Desk #389 -->
+<style>
+  :root { --bg:#f7f8f6; --ink:#15191c; --muted:#5d666d; --accent:#0f766e; --line:#e3e7e4; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111416; --ink:#eef1f0; --muted:#9aa4a9; --accent:#2dd4bf; --line:#2a3034; } }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--ink); font:400 17px/1.6 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  main, footer { width:min(800px, 100% - 32px); margin:0 auto; }
+  main { padding:56px 0; }
+  .mark { font:700 19px/1 ui-monospace, SFMono-Regular, Menlo, monospace; margin-bottom:28px; }
+  h1 { font:800 clamp(32px,5.6vw,48px)/1.08 system-ui, -apple-system, sans-serif; letter-spacing:-.025em; margin:0 0 14px; }
+  p { margin:0 0 16px; color:var(--muted); }
+  img { display:block; width:100%; height:auto; border-radius:12px; background:#1e1e1e; margin:24px 0; }
+  .row a { display:inline-block; margin:0 10px 10px 0; padding:12px 18px; border-radius:12px; text-decoration:none; font-weight:650; }
+  .primary { background:var(--accent); color:#fff; }
+  @media (prefers-color-scheme: dark) { .primary { color:#06201d; } }
+  .secondary { border:1px solid var(--line); color:var(--ink); }
+  footer { padding:24px 0 36px; color:var(--muted); font-size:14px; border-top:1px solid var(--line); }
+  footer a { color:var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <div class='mark'>&gt;_ har2recipe</div>
+  <h1>Browse a site once. Get its hidden API as a Python client.</h1>
+  <p>Export a HAR, describe what you want, and your own Claude Code writes a client plus a recipe. The recipe replays in about a second with plain HTTP: no browser, no model. <code>verify</code> tells you the day the site changes.</p>
+  <div class='row'><a class='primary' href='https://github.com/trungtin/har2recipe'>Get it on GitHub (free, MIT)</a><a class='secondary' href='guides/'>Read the guides</a></div>
+  <img src='demo.png' width='2510' height='966' alt='Terminal: har2recipe learn finishes in 26 s for $0.87 of Claude usage; har2recipe run replays 8 results in 0.94 s with no model.'>
+</main>
+<footer>har2recipe · <a href='guides/'>Guides</a> · <a href='https://github.com/trungtin/har2recipe'>GitHub</a></footer>
+</body>
+</html>

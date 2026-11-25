@@ -2,6 +2,8 @@
 
 **Browse a site once. Get its hidden API as a Python client, plus a recipe that replays in seconds with no model.**
 
+**Guides:** [turn a HAR file into a Python API client, step by step](https://trungtin.github.io/har2recipe/guides/har-to-python-api-client/) · [all guides](https://trungtin.github.io/har2recipe/guides/)
+
 ![har2recipe learning an Apify Store search, then replaying it with no model](docs/demo.png)
 
 ## How it works

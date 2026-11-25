@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang='en'>
+<head>
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>How to turn a HAR file into a Python API client (that replays without a browser) · har2recipe guides</title>
+<meta name='description' content='A HAR file already holds the site&#39;s hidden API. Find the JSON call, rebuild it with requests, wrap it in a small client and replay it with no browser. Steps, code and the things that break it.'>
+<link rel='canonical' href='https://trungtin.github.io/har2recipe/guides/har-to-python-api-client/'>
+<meta property='og:title' content='How to turn a HAR file into a Python API client'>
+<meta property='og:description' content='Find the JSON call in the HAR, rebuild it with requests, wrap it in a client, replay it with no browser.'>
+<meta property='og:type' content='article'>
+<meta property='og:image' content='https://trungtin.github.io/har2recipe/demo.png'>
+<link rel='icon' href='data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%2714%27 fill=%27%230f766e%27/%3E%3Cpath d=%27M18 22l12 10-12 10M34 44h14%27 stroke=%27white%27 stroke-width=%276%27 stroke-linecap=%27round%27 stroke-linejoin=%27round%27 fill=%27none%27/%3E%3C/svg%3E'>
+<script type='application/ld+json'>{"@context":"https://schema.org","@type":"TechArticle","headline":"How to turn a HAR file into a Python API client that replays without a browser","datePublished":"2026-11-25","dateModified":"2026-11-25","image":"https://trungtin.github.io/har2recipe/demo.png","author":{"@type":"Organization","name":"har2recipe","url":"https://github.com/trungtin/har2recipe"}}</script>
+<style>
+  :root { --bg:#f7f8f6; --ink:#15191c; --muted:#5d666d; --accent:#0f766e; --card:#fff; --line:#e3e7e4; --warn:#fff6e6; --code:#eef1ef; --term:#1e1e1e; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#111416; --ink:#eef1f0; --muted:#9aa4a9; --accent:#2dd4bf; --card:#181c1f; --line:#2a3034; --warn:#2a2416; --code:#1d2226; } }
+  * { box-sizing:border-box; margin:0; }
+  body { background:var(--bg); color:var(--ink); font:400 17px/1.65 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+  header, main, footer { width:min(740px, 100% - 32px); margin:0 auto; }
+  header { padding:26px 0 0; display:flex; justify-content:space-between; align-items:center; font-size:15px; }
+  header a { color:var(--ink); text-decoration:none; }
+  .mark { display:inline-flex; align-items:center; gap:10px; font:700 19px/1 ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .mark svg { width:28px; height:28px; }
+  main { padding:44px 0 56px; }
+  .kicker { color:var(--muted); font-size:14px; letter-spacing:.04em; text-transform:uppercase; }
+  h1 { font:800 clamp(32px,5.6vw,48px)/1.08 system-ui, -apple-system, sans-serif; letter-spacing:-.025em; margin:10px 0 20px; }
+  h2 { font:800 26px/1.2 system-ui, -apple-system, sans-serif; letter-spacing:-.015em; margin:44px 0 12px; }
+  h3 { font-size:18px; font-weight:650; margin:24px 0 6px; }
+  p, ul, ol { margin:0 0 14px; }
+  ul, ol { padding-left:22px; }
+  li { margin:0 0 6px; }
+  a { color:var(--accent); }
+  code { font:500 15px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; background:var(--code); padding:1px 6px; border-radius:6px; }
+  pre { background:var(--code); border-radius:12px; padding:14px 16px; overflow-x:auto; margin:0 0 14px; }
+  pre code { padding:0; background:none; font-size:14px; }
+  .answer { background:var(--card); border:1px solid var(--line); border-left:4px solid var(--accent); border-radius:14px; padding:18px 20px; margin:8px 0; }
+  .answer p:last-child { margin:0; }
+  .warn { background:var(--warn); border-radius:14px; padding:16px 20px; margin:18px 0; }
+  .warn p:last-child, .warn ul:last-child { margin-bottom:0; }
+  table { width:100%; border-collapse:collapse; margin:8px 0 16px; font-size:15px; }
+  th, td { text-align:left; padding:9px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-weight:650; }
+  .button-box { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:24px; margin:30px 0; }
+  .button-box h3 { margin-top:0; font:800 22px/1.25 system-ui, -apple-system, sans-serif; }
+  .shot { display:block; width:100%; height:auto; border-radius:12px; background:var(--term); margin:6px 0 8px; }
+  .cta { display:inline-block; background:var(--accent); color:#fff; text-decoration:none; font-weight:650; padding:13px 20px; border-radius:12px; margin-top:6px; }
+  @media (prefers-color-scheme: dark) { .cta { color:#06201d; } }
+  .cta:hover { filter:brightness(1.06); }
+  .small { color:var(--muted); font-size:14px; }
+  footer { padding:24px 0 36px; color:var(--muted); font-size:14px; border-top:1px solid var(--line); }
+</style>
+</head>
+<body>
+<header>
+  <a class='mark' href='../../'><svg viewBox='0 0 64 64' aria-hidden='true'><rect width='64' height='64' rx='14' fill='var(--accent)'/><path d='M18 22l12 10-12 10M34 44h14' stroke='#fff' stroke-width='6' stroke-linecap='round' stroke-linejoin='round' fill='none'/></svg>har2recipe</a>
+  <a href='../'>All guides</a>
+</header>
+<main>
+  <p class='kicker'>Guide · Hidden APIs · Updated 25 Nov 2026</p>
+  <h1>How to turn a HAR file into a Python API client that replays without a browser</h1>
+
+  <div class='answer'>
+    <p><strong>Short answer:</strong> a HAR file is a JSON log of every request the page made, so the site's hidden API is already in it. Load it in Python, keep the entries whose response is JSON, and find the one that returns your data. Copy its method, URL, the few headers it really needs and its body, then rebuild the call with <code>requests</code>. Put the parts that change (search word, page, cursor) into function arguments, and you have a client that runs with no browser. One endpoint takes about 20&ndash;40 minutes by hand. It won't work if the site signs every request or sits behind heavy bot protection; step 4 shows how to tell.</p>
+  </div>
+  <p class='small'>You need Python 3.9+ and <code>pip install requests</code>. Only use this on data you're allowed to read, and respect the site's terms and rate limits.</p>
+
+  <h2>The manual method, step by step</h2>
+
+  <h3>1. Record a small HAR</h3>
+  <ul>
+    <li><strong>Chrome or Edge:</strong> open DevTools &gt; Network, tick <em>Preserve log</em>, pick the <em>Fetch/XHR</em> filter, then do the one action you want data from (a search, the next page). Click the download arrow to export the HAR.</li>
+    <li><strong>Firefox:</strong> DevTools &gt; Network, do the action, then right-click any request &gt; <em>Save All As HAR</em>.</li>
+    <li><strong>Safari:</strong> Web Inspector &gt; Network, do the action, then <em>Export</em>.</li>
+  </ul>
+  <p>Keep it small: one page, one action. A 40 MB HAR full of images and analytics hides the one call you need.</p>
+  <p>Recent Chrome versions export a <em>sanitized</em> HAR by default, without cookies or <code>Authorization</code> headers. That is safer to keep around. If the call needs a login, you'll pass your token from an environment variable in step 5, so you don't need the sensitive export.</p>
+
+  <h3>2. List the data calls</h3>
+  <p>A HAR is plain JSON: <code>log.entries[]</code>, each with a <code>request</code> and a <code>response</code>. This prints only the calls that returned JSON:</p>
+<pre><code>import json
+
+har = json.load(open('site.har', encoding='utf-8'))
+for i, e in enumerate(har['log']['entries']):
+    res = e['response']
+    if 'json' in res['content'].get('mimeType', ''):
+        size = res['content'].get('size', 0)
+        print(i, e['request']['method'], res['status'], size, e['request']['url'][:110])</code></pre>
+  <p>Look for URLs with <code>/api/</code>, <code>graphql</code>, <code>search</code> or <code>.json</code>. The biggest response is usually the one with your list. Open it to confirm:</p>
+<pre><code>e = har['log']['entries'][17]          # the index you picked
+print(json.dumps(e['request'], indent=1)[:2000])
+print(e['response']['content'].get('text', '')[:1000])</code></pre>
+  <p>If <code>content.encoding</code> is <code>base64</code>, decode the text before reading it.</p>
+
+  <h3>3. Replay it from Python</h3>
+  <p>Rebuild the request from the entry. Drop HTTP/2 pseudo-headers (they start with <code>:</code>), cookies and headers that <code>requests</code> sets itself:</p>
+<pre><code>import requests
+
+SKIP = {'cookie', 'content-length', 'host', 'accept-encoding', 'connection'}
+
+def replay(entry):
+    req = entry['request']
+    headers = {h['name']: h['value'] for h in req['headers']
+               if not h['name'].startswith(':') and h['name'].lower() not in SKIP}
+    body = (req.get('postData') or {}).get('text')
+    r = requests.request(req['method'], req['url'], headers=headers, data=body, timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+data = replay(e)
+print(type(data), list(data)[:10] if isinstance(data, dict) else len(data))</code></pre>
+  <p>Same JSON as in the browser? The hard part is done. A <code>401</code> or <code>403</code> means a header is missing. Add back one at a time: <code>authorization</code>, <code>x-api-key</code>, a CSRF token, <code>referer</code>/<code>origin</code>, then the cookie.</p>
+
+  <h3>4. Check that it works without the browser</h3>
+  <p>Run it again in ten minutes and again tomorrow. Each kind of failure has its own fix:</p>
+  <ul>
+    <li><strong>A token that expires</strong> (it works now, fails in an hour): find the request in the HAR that returns the token, call it first, and pass the token on.</li>
+    <li><strong>A signed parameter</strong> (a hash that is different on every request, often <code>signature</code>, <code>sign</code> or <code>_s</code>): page JavaScript computes it, so plain HTTP usually can't reproduce it.</li>
+    <li><strong>Bot protection</strong> (a <code>403</code> with an HTML challenge page instead of JSON): you need a real browser such as Playwright, or the site's official API.</li>
+  </ul>
+
+  <h3>5. Wrap it in a small client</h3>
+  <p>Now replace the copied URL with a function. Arguments become query parameters, secrets come from the environment, and the function returns only the fields you need:</p>
+<pre><code>import os
+import requests
+
+class ExampleClient:
+    BASE = 'https://api.example.com/v1'
+
+    def __init__(self, token=None):
+        self.s = requests.Session()
+        self.s.headers.update({
+            'accept': 'application/json',
+            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)',
+        })
+        token = token or os.environ.get('EXAMPLE_TOKEN')
+        if token:
+            self.s.headers['authorization'] = 'Bearer ' + token
+
+    def search(self, query, limit=20):
+        r = self.s.get(self.BASE + '/search', params={'q': query, 'limit': limit}, timeout=30)
+        r.raise_for_status()
+        items = r.json()['data']['results']
+        return [{'title': x['name'], 'price': x['price']['amount']} for x in items]
+
+print(ExampleClient().search('shoes', limit=5))</code></pre>
+  <p>For paging, read the cursor or <code>next</code> field from each response and loop until it's empty.</p>
+
+  <h3>6. Notice the day it breaks</h3>
+  <p>Sites move endpoints and rename fields without telling anyone, and a client that returns <code>[]</code> looks the same as one that works. Add a check and run it on a schedule:</p>
+<pre><code>items = ExampleClient().search('shoes')
+assert len(items) &gt;= 10 and all(x['title'] for x in items), 'stale: capture a new HAR'</code></pre>
+
+  <div class='warn'>
+    <p><strong>Treat a HAR like a password file</strong></p>
+    <ul>
+      <li>Unless the export is sanitized, it holds your cookies, bearer tokens and form bodies, including login forms. Never paste one into a chat or an issue.</li>
+      <li>Keep tokens in environment variables, not in the client file.</li>
+      <li>Review any generated code before you run it.</li>
+    </ul>
+  </div>
+
+  <h2>Where doing it by hand stops working</h2>
+  <p>Doing this once is fine. But every new site means another 20&ndash;40 minutes of reading JSON, chasing a missing header and writing the paging loop. Clients built by hand also break silently, and nothing tells you until someone sees an empty table.</p>
+
+  <div class='button-box' id='har2recipe'>
+    <h3>Let your own Claude do steps 2&ndash;6</h3>
+    <p><strong>har2recipe</strong> reads your HAR and keeps only the JSON calls. It blanks cookies, auth headers and key-like values, then has <em>your</em> Claude Code pick the endpoints. It writes <code>api_client.py</code>, <code>example_usage.py</code>, a README and a <code>recipe.json</code>, and replays the recipe once before it says done. After that, <code>har2recipe run</code> replays the recipe with plain HTTP: no browser, no model, no tokens. <code>har2recipe verify</code> exits 2 the day the site changes.</p>
+    <img class='shot' src='../../demo.png' width='2510' height='966' loading='lazy' alt='Terminal: har2recipe learn on an Apify Store search HAR finishes in 26 s for $0.87 of Claude usage; har2recipe run then replays 8 results in 0.94 s with no model.'>
+    <p class='small'>A real run: learning an Apify Store search took 26 s and $0.87 of Claude usage, and the replay took 0.94 s with no model.</p>
+<pre><code>uv tool install git+https://github.com/trungtin/har2recipe
+har2recipe learn site.har --goal 'newest 20 listings: title, price, url'
+har2recipe run newest_20_listings_title_price_url_api/recipe.json -p query=shoes</code></pre>
+    <a class='cta' href='https://github.com/trungtin/har2recipe'>Get har2recipe on GitHub (free, MIT)</a>
+    <p class='small' style='margin-top:12px'>Needs Python 3.9+ and Claude Code logged in. We make har2recipe, so we're not neutral; the list below is a fair one.</p>
+  </div>
+
+  <h2>Other ways to do it</h2>
+  <table>
+    <thead><tr><th>Option</th><th>Good for</th><th>Watch out for</th></tr></thead>
+    <tbody>
+      <tr><td>DevTools <em>Copy as cURL</em> + curlconverter</td><td>One request, fast, in the browser</td><td>One call at a time; no paging, client or check</td></tr>
+      <tr><td>har2requests (PyPI)</td><td>Turning a whole HAR into a Python script</td><td>Replays every captured request; you trim it into a client by hand</td></tr>
+      <tr><td>mitmproxy2swagger</td><td>Writing an OpenAPI spec from captured traffic</td><td>Documents the API; you still write the client</td></tr>
+      <tr><td>reverse-api-engineer</td><td>Agent-built clients, with browser and agent modes</td><td>Heavier setup than a single HAR file</td></tr>
+      <tr><td>Playwright or Selenium</td><td>Sites that only work in a real browser</td><td>Every run drives a browser: slower and easier to block</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Quick answers</h2>
+  <h3>Can I convert a HAR file to Python without writing code?</h3>
+  <p>For a single request, yes: copy it as cURL and paste it into curlconverter. For a reusable client with parameters and paging, you write the wrapper yourself (step 5) or have a tool generate it.</p>
+  <h3>Why does my replay get 403 when the browser works?</h3>
+  <p>Usually a missing header (a token, a CSRF value, <code>origin</code>) or an expired cookie. If the 403 body is an HTML challenge page, it's bot protection, and plain HTTP won't get through.</p>
+  <h3>Is a HAR file safe to share?</h3>
+  <p>Not unless it's sanitized. It can hold session cookies and tokens that let someone act as you.</p>
+  <h3>Does this work for GraphQL?</h3>
+  <p>Yes. The call is a POST to one URL with the query in the body. Keep the body as is, and turn the <code>variables</code> into function arguments.</p>
+</main>
+<footer>har2recipe guides · <a href='../'>More guides</a> · <a href='https://github.com/trungtin/har2recipe'>GitHub</a></footer>
+</body>
+</html>
